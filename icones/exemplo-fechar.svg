@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- fechar: losango colorido com o símbolo vazado (exemplo de ícone próprio) -->
+  <path fill="#f2777a" fill-rule="evenodd" d="M8 1.5 14.5 8 8 14.5 1.5 8ZM6.2 5.5 8 7.3l1.8-1.8.7.7L8.7 8l1.8 1.8-.7.7L8 8.7l-1.8 1.8-.7-.7L7.3 8 5.5 6.2Z"/>
+</svg>
