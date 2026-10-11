@@ -1,2 +1,6 @@
 __pycache__/
+# test renders; README images live in docs/images/
 *.png
+!docs/images/*.png
+# personal palettes you don't want to commit
+*.local.conf
