@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>own-theme Studio: dark GTK &amp; GNOME Shell theme editor for Zorin OS</title>
+<meta name="description" content="Pick a background and an accent color and preview a complete dark theme for Zorin OS and GNOME: GTK3, GTK4/libadwaita, GNOME Shell, translucent glass windows and custom window buttons. Exports a palette.conf for the open-source own-theme generator.">
+<meta name="keywords" content="Zorin OS theme, GNOME theme, GTK theme generator, libadwaita theme, GNOME Shell theme, dark theme, accent color, Catppuccin, Dracula, Nord, Tokyo Night, Gruvbox, Blur my Shell, glassmorphism">
+<meta name="theme-color" content="#121315">
+<link rel="canonical" href="https://grs2080w.github.io/gtk-theme-generator/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="own-theme Studio: build your own dark Zorin OS / GNOME theme">
+<meta property="og:description" content="Choose a few colors, preview GTK3, GTK4/libadwaita and GNOME Shell live, then generate the theme with one command.">
+<meta property="og:url" content="https://grs2080w.github.io/gtk-theme-generator/">
+<meta property="og:image" content="https://raw.githubusercontent.com/Grs2080w/gtk-theme-generator/main/docs/images/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a workbench — controls pinned on the left, desktop preview on the right, tables below.
+   Dark-only look (this is a dark-theme editor; the page itself stays neutral so it doesn't compete with the preview). */
+:root {
+  --bg: #121315;
+  --panel: #1a1b1e;
+  --panel-2: #222327;
+  --line: #2e3035;
+  --fg: #e9e7e2;
+  --muted: #9a978f;
+  --accent: #e9e7e2;
+  --good: #7fd8a6;
+  --warn: #f2c46d;
+  --bad: #ff8a8a;
+  --display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+  --desk: system-ui, "Inter", "Cantarell", "Ubuntu", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.5; padding: 24px 20px 64px; margin: 0; }
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 28px; }
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 62ch; margin: 6px 0 0; }
+.top a.gh { color: var(--fg); font-size: 14px; font-weight: 600; text-underline-offset: 3px; }
+h2 { font-family: var(--display); font-weight: 500; font-size: 20px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 14px; font-size: 14px; max-width: 70ch; }
+.mono { font-family: var(--mono); font-size: 13px; }
+
+.bench { display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- controls ---------- */
+.controls { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 900px) { .controls { position: static; } }
+.group { display: grid; gap: 6px; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.preset-groups { display: grid; gap: 8px; }
+.preset-groups .sub-l { margin: 0; }
+.preset.full { border-style: dashed; }
+.preset { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); border-radius: 999px; padding: 4px 10px 4px 5px; font: 500 12.5px var(--body); cursor: pointer; }
+.preset:hover { border-color: var(--muted); }
+.preset:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.preset i { width: 16px; height: 16px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+
+.knob { display: grid; grid-template-columns: 36px minmax(0, 1fr) 92px; gap: 4px 10px; align-items: center; padding: 8px; margin: 0 -8px; border-radius: 10px; transition: background .15s; }
+.knob:hover, .knob:focus-within { background: var(--panel-2); }
+.knob input[type=color] { width: 36px; height: 36px; border: none; padding: 0; background: none; border-radius: 9px; cursor: pointer; grid-row: span 2; }
+.knob input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+.knob input[type=color]::-webkit-color-swatch { border: 1px solid rgba(255,255,255,.18); border-radius: 9px; }
+.knob input[type=color]::-moz-color-swatch { border: 1px solid rgba(255,255,255,.18); border-radius: 9px; }
+.knob .name { font-weight: 600; font-size: 14px; }
+.knob .what { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.knob input[type=text] { width: 100%; background: var(--bg); border: 1px solid var(--line); color: var(--fg); border-radius: 7px; padding: 4px 7px; font: 13px var(--mono); }
+.knob input[type=text][aria-invalid=true] { border-color: var(--bad); }
+.auto { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); grid-column: 2 / 4; }
+.range { display: grid; grid-template-columns: minmax(0,1fr) 48px; gap: 10px; align-items: center; }
+.range input { width: 100%; accent-color: var(--fg); }
+.name-in { width: 100%; background: var(--bg); border: 1px solid var(--line); color: var(--fg); border-radius: 7px; padding: 6px 8px; font: 13px var(--mono); }
+hr.sep { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.knob.slider { grid-template-columns: 82px minmax(0, 1fr) 44px; }
+.knob.slider label { font-size: 13.5px; font-weight: 600; }
+.knob.slider input { width: 100%; accent-color: var(--fg); }
+.knob.slider .mono { text-align: right; }
+.knob.slider[aria-disabled=true] { opacity: .45; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; font-weight: 600; cursor: pointer; grid-template-columns: none; }
+.check input { accent-color: var(--fg); width: 16px; height: 16px; }
+.tip { color: var(--muted); font-size: 12.5px; line-height: 1.4; margin: 0; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { flex: 1; background: none; border: 0; color: var(--muted); padding: 6px 4px; font: 500 12.5px var(--body); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-checked=true] { background: var(--fg); color: var(--bg); font-weight: 600; }
+.seg[aria-disabled=true] { opacity: .45; }
+.sub-l { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.bcolors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bcolor { display: grid; gap: 4px; justify-items: start; font-size: 12.5px; font-weight: 600; }
+.bcolor input[type=color] { width: 100%; height: 30px; border: none; padding: 0; background: none; cursor: pointer; }
+.bcolor input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+.bcolor input[type=color]::-webkit-color-swatch { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; }
+.bcolor input[type=color]::-moz-color-swatch { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; }
+.bcolor label { display: flex; gap: 4px; align-items: center; font-weight: 400; color: var(--muted); font-size: 12px; }
+.icrow { display: grid; grid-template-columns: 26px 74px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; }
+.icrow .pv { width: 22px; height: 22px; border-radius: 6px; background: var(--panel-2) center / contain no-repeat; box-shadow: inset 0 0 0 1px var(--line); }
+.icrow .path { font: 12px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icrow .path.warn { color: var(--warn); white-space: normal; }
+.file-btn { position: relative; display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); border-radius: 7px; padding: 3px 9px; font: 600 12px var(--body); cursor: pointer; white-space: nowrap; }
+.file-btn:focus-within { outline: 2px solid var(--fg); outline-offset: 2px; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.x-btn { border: 0; background: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 0 4px; }
+.x-btn:hover { color: var(--fg); }
+.row-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+.contrast { display: grid; gap: 6px; }
+.cr { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; font-size: 13px; align-items: center; }
+.pill { font: 500 12px var(--mono); padding: 2px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.pill.good { background: rgba(127,216,166,.14); color: var(--good); }
+.pill.ok { background: rgba(242,196,109,.14); color: var(--warn); }
+.pill.bad { background: rgba(255,138,138,.14); color: var(--bad); }
+
+/* ---------- desktop preview ---------- */
+.stage { display: grid; gap: 10px; min-width: 0; }
+.hint { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; min-height: 20px; }
+.hint b { color: var(--fg); font-weight: 600; }
+.desk { --r: 1; position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); font-family: var(--desk); font-size: 13px; min-height: 560px; background: var(--wall); }
+.bar { height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: var(--panelbar); color: var(--text); font-weight: 600; font-size: 13px; }
+.bar .act { padding: 3px 10px; border-radius: 999px; background: var(--qt-off); }
+.bar .icons { display: flex; gap: 10px; align-items: center; }
+.bar .icons span { width: 13px; height: 13px; border-radius: 3px; background: currentColor; opacity: .85; display: block; }
+.desk-body { position: relative; padding: 22px; display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 20px; align-items: start; }
+@media (max-width: 1100px) { .desk-body { grid-template-columns: minmax(0,1fr); } }
+
+.win { background: var(--window-a); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); color: var(--text); border-radius: calc(15px * var(--r)); overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.35); min-width: 0; }
+.hb { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: transparent; }
+.hb .ttl { flex: 1; text-align: center; line-height: 1.2; min-width: 0; }
+.hb .ttl b { display: block; font-size: 13px; }
+.hb .ttl small { color: var(--muted-t); font-size: 11px; }
+.btn { border: none; font: 600 12.5px var(--desk); padding: 6px 14px; border-radius: calc(9px * var(--r)); background: var(--btn); color: var(--text); cursor: default; white-space: nowrap; }
+.btn.hov { background: var(--btn-hover); }
+.btn.sug { background: var(--accent-c); color: var(--on-accent); }
+.btn.des { background: var(--error-c); color: var(--on-accent); }
+.btn.ico { width: 30px; height: 28px; padding: 0; display: grid; place-items: center; }
+.linked { display: flex; }
+.linked .btn { border-radius: 0; }
+.linked .btn:first-child { border-radius: calc(9px * var(--r)) 0 0 calc(9px * var(--r)); }
+.linked .btn:last-child { border-radius: 0 calc(9px * var(--r)) calc(9px * var(--r)) 0; }
+.linked .btn.on { background: var(--btn-hover); }
+.wctl { display: flex; align-items: center; gap: 6px; padding-left: 4px; }
+.wb { display: block; flex: none; border-radius: 50%; background-repeat: no-repeat; background-position: center; transition: background-color .15s, opacity .15s; }
+.wb.missing { outline: 1px dashed var(--muted-t); outline-offset: -1px; }
+.wbody { display: grid; grid-template-columns: 150px minmax(0, 1fr); min-height: 380px; }
+@media (max-width: 560px) { .wbody { grid-template-columns: minmax(0,1fr); } .side { display: none; } }
+.side { background: var(--sidebar-a); padding: 8px; display: grid; align-content: start; gap: 2px; }
+.side div { padding: 7px 10px; border-radius: calc(9px * var(--r)); font-size: 13px; }
+.side .sel { background: var(--accent-c); color: var(--on-accent); font-weight: 600; }
+.side .dim { color: var(--muted-t); }
+.content { background: transparent; padding: 14px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.entry { flex: 1 1 140px; min-width: 0; background: var(--view-a); color: var(--text); border-radius: calc(9px * var(--r)); padding: 7px 10px; box-shadow: inset 0 0 0 1px var(--btn); font-size: 13px; }
+.entry.focus { box-shadow: inset 0 0 0 2px var(--focus); }
+.entry.ph { color: var(--placeholder); }
+.entry.err { box-shadow: inset 0 0 0 2px var(--error-c); color: var(--error-c); }
+.list { background: var(--view-a); border-radius: calc(12px * var(--r)); overflow: hidden; box-shadow: 0 0 0 1px var(--border); }
+.list div { padding: 8px 12px; display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--border); }
+.list div:first-child { border-top: none; }
+.list .rsel { background: var(--row-sel); }
+.list small { color: var(--muted-t); }
+.list .off { color: var(--insens); }
+.sw { width: 40px; height: 22px; border-radius: 999px; background: var(--sw-off); padding: 2px; display: flex; }
+.sw::after { content: ""; width: 18px; height: 18px; border-radius: 50%; background: var(--knob); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.sw.on { background: var(--accent-c); justify-content: flex-end; }
+.chk { width: 17px; height: 17px; border-radius: calc(4px * var(--r)); background: var(--accent-c); color: var(--on-accent); display: grid; place-items: center; font-size: 12px; font-weight: 800; line-height: 1; }
+.chk.off { background: var(--view); box-shadow: inset 0 0 0 1px var(--sw-off); }
+.scale { flex: 1 1 160px; height: 22px; display: flex; align-items: center; position: relative; }
+.scale .tr { height: 4px; width: 100%; border-radius: 999px; background: var(--btn); overflow: hidden; }
+.scale .tr i { display: block; height: 100%; width: 62%; background: var(--accent-c); }
+.scale .kn { position: absolute; left: calc(62% - 9px); width: 18px; height: 18px; border-radius: 50%; background: var(--accent-c); box-shadow: 0 1.5px 2px 1px rgba(0,0,0,.4); }
+.prog { height: 6px; flex: 1 1 160px; border-radius: 999px; background: var(--btn); overflow: hidden; }
+.prog i { display: block; height: 100%; width: 40%; background: var(--accent-c); }
+.status { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; font-weight: 600; }
+.status span { display: inline-flex; gap: 5px; align-items: center; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+.col-right { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.qs { background: var(--window); color: var(--text); border-radius: calc(15px * var(--r)); padding: 12px; display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.45), 0 0 0 1px var(--qs-border); align-self: start; }
+.qs .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qt { border-radius: 999px; padding: 9px 12px; background: var(--qt-off); font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qt.on { background: linear-gradient(90deg, var(--qt-g1), var(--qt-g2)); color: var(--on-accent); }
+.qs .sl { display: flex; align-items: center; gap: 10px; }
+.qs .sl .t { flex: 1; height: 6px; border-radius: 999px; background: var(--qt-off); overflow: hidden; }
+.qs .sl .t i { display: block; height: 100%; width: 70%; background: var(--accent-c); }
+.qs .sl .t.over i { background: linear-gradient(90deg, var(--accent-c) 80%, var(--error-c) 80%); width: 92%; }
+.states { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; font-size: 12px; }
+.states .wctl { justify-content: flex-end; }
+.states span.n { color: var(--muted-t); }
+.states .bk { background: var(--window-bk); border-radius: 999px; padding: 3px 6px; }
+.note { background: var(--view); border-radius: calc(12px * var(--r)); padding: 10px 12px; display: grid; gap: 2px; }
+.note b { font-size: 12.5px; }
+.note span { color: var(--muted-t); font-size: 12px; }
+.note .warn { color: var(--warn-c); font-weight: 600; }
+.note .ok { color: var(--success-c); font-weight: 600; }
+
+/* highlight of "what this variable paints" */
+.desk [data-r] { transition: outline-color .12s, box-shadow .12s; outline: 2px dashed transparent; outline-offset: 2px; }
+.desk.spot [data-r].hit { outline-color: var(--hl); }
+.desk.spot::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 2px var(--hl); border-radius: 14px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- role map ---------- */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; border-top: none; }
+td .sw2 { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+td .sw2 i { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); display: block; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+.fam { display: grid; gap: 8px; margin-top: 14px; }
+.fam h3 { font-size: 13px; margin: 0; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+.fam h3 small { color: var(--muted); font-weight: 400; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { width: 34px; height: 34px; border-radius: 7px; overflow: hidden; display: grid; grid-template-rows: 1fr 1fr; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.chip i { display: block; }
+
+.out { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .out { grid-template-columns: minmax(0,1fr); } }
+pre.conf { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; margin: 0; font: 12.5px/1.6 var(--mono); color: var(--fg); white-space: pre; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+.act-btn { border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); border-radius: 8px; padding: 7px 12px; font: 600 13px var(--body); cursor: pointer; }
+.act-btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.act-btn:hover { filter: brightness(1.1); }
+.toast { font-size: 13px; color: var(--good); }
+textarea { width: 100%; min-height: 120px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; color: var(--fg); padding: 12px; font: 12.5px/1.5 var(--mono); resize: vertical; }
+.guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 28px; }
+.guide h3 { font-family: var(--display); font-weight: 500; font-size: 16px; margin: 0 0 6px; }
+.guide p, .guide li { font-size: 14px; color: var(--fg); }
+.guide p { margin: 0 0 8px; }
+.guide ul, .guide ol { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 5px; }
+.guide li span, .guide .m { color: var(--muted); }
+.guide code, .guide pre { font: 12.5px var(--mono); background: var(--panel-2); border-radius: 5px; }
+.guide code { padding: 1px 6px; overflow-wrap: anywhere; }
+.guide pre { padding: 10px 12px; margin: 0 0 8px; overflow-x: auto; white-space: pre; line-height: 1.5; }
+.guide a, footer a { color: var(--fg); text-underline-offset: 2px; }
+ol.steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; }
+ol.steps code, p code { font: 12.5px var(--mono); background: var(--panel-2); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+.err-msg { color: var(--bad); font-size: 13px; }
+footer { color: var(--muted); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>own-theme Studio</h1>
+      <p class="lede">A dark theme editor for Zorin OS and GNOME. Pick the base colors and watch the whole theme recalculate. The result is a <span class="mono">palette.conf</span> that <span class="mono">generate-theme.py</span> turns into a real GTK3, GTK4/libadwaita and GNOME Shell theme.</p>
+    </div>
+    <a class="gh" href="https://github.com/Grs2080w/gtk-theme-generator" target="_blank" rel="noopener">Source code and install guide on GitHub →</a>
+  </header>
+
+  <section class="bench">
+    <aside class="controls" aria-label="Theme controls">
+      <div class="group">
+        <span class="label">Ready-made themes</span>
+        <div id="presets" class="preset-groups"></div>
+      </div>
+      <div class="group">
+        <label class="knob check" data-role="harmony"><input type="checkbox" id="harmony"> Adjust the other colors automatically</label>
+        <p class="tip">On: when you change the <b>background</b> or the <b>accent</b>, the text and the error, warning and success colors are recalculated with the same hue and intensity, and the accent is kept readable on the background. Off: each color only changes when you touch it.</p>
+        <div class="row-btns"><button class="act-btn" id="harmonize" type="button">Harmonize now</button></div>
+      </div>
+      <hr class="sep">
+      <div class="group" id="knobs"></div>
+      <div class="group">
+        <label class="label" for="radius">Rounded corners</label>
+        <div class="range knob" data-role="radius" style="grid-template-columns:minmax(0,1fr) 48px;">
+          <input type="range" id="radius" min="0" max="2" step="0.1" value="1">
+          <span class="mono" id="radius-v">1.0×</span>
+        </div>
+      </div>
+      <hr class="sep">
+      <div class="group">
+        <span class="label">Glass: transparency and blur</span>
+        <div class="knob slider" data-role="glass">
+          <label for="op-window">Window</label>
+          <input type="range" id="op-window" min="0.3" max="1" step="0.05" value="1">
+          <span class="mono" id="op-window-v">100%</span>
+        </div>
+        <div class="knob slider" data-role="glass">
+          <label for="op-content">Content</label>
+          <input type="range" id="op-content" min="0.3" max="1" step="0.05" value="1">
+          <span class="mono" id="op-content-v">100%</span>
+        </div>
+        <label class="knob check" data-role="blur"><input type="checkbox" id="blur"> Blur what is behind the windows</label>
+        <div class="knob slider" data-role="blur" id="blur-row">
+          <label for="blur-strength">Strength</label>
+          <input type="range" id="blur-strength" min="0" max="100" step="1" value="30">
+          <span class="mono" id="blur-strength-v">30</span>
+        </div>
+        <div class="knob" data-role="blur" style="display:grid;grid-template-columns:none;gap:4px" id="blur-mode-wrap">
+          <span class="sub-l">What to blur</span>
+          <div class="seg" role="radiogroup" aria-label="Blur mode" id="seg-blur_mode"></div>
+          <p class="tip" id="blur-mode-tip"></p>
+        </div>
+        <p class="tip">Below 100%, window backgrounds become translucent. The blur is done by the <a href="https://extensions.gnome.org/extension/3193/blur-my-shell/" target="_blank" rel="noopener" style="color:inherit"><b>Blur my Shell</b></a> extension: with blur checked, <span class="mono">./install.sh --apply</span> turns on app blur in it.</p>
+        <div class="row-btns">
+          <span class="file-btn">Try with my wallpaper<input type="file" id="wall-file" accept="image/*"></span>
+          <button class="x-btn" id="wall-clear" type="button" title="Back to the default background" aria-label="Back to the default background" hidden>✕</button>
+        </div>
+      </div>
+      <hr class="sep">
+      <div class="group" id="g-buttons">
+        <span class="label">Window buttons</span>
+        <div class="knob" data-role="buttons" style="display:grid;grid-template-columns:none;gap:6px">
+          <div class="seg" role="radiogroup" aria-label="Button style" id="seg-buttons"></div>
+          <span class="sub-l">Symbol</span>
+          <div class="seg" role="radiogroup" aria-label="Symbol drawing" id="seg-glyphs"></div>
+          <span class="sub-l">Show the symbol (circles)</span>
+          <div class="seg" role="radiogroup" aria-label="When to show the symbol" id="seg-symbols"></div>
+        </div>
+        <div class="knob" data-role="buttons" style="display:grid;grid-template-columns:none;gap:6px" id="bcolors-wrap">
+          <span class="sub-l">Colors (auto = error, success and warning colors)</span>
+          <div class="bcolors" id="bcolors"></div>
+        </div>
+        <div class="knob slider" data-role="buttons" id="bsize-row">
+          <label for="bsize">Size</label>
+          <input type="range" id="bsize" min="16" max="26" step="1" value="18">
+          <span class="mono" id="bsize-v">18px</span>
+        </div>
+        <div class="knob" data-role="buttons" style="display:grid;grid-template-columns:none;gap:2px">
+          <span class="sub-l">Custom icons (SVG or PNG; they replace the whole button)</span>
+          <div id="icons"></div>
+          <p class="tip">Put the files in the project's <span class="mono">icons/</span> folder with the same name. See the tips further down.</p>
+        </div>
+      </div>
+      <hr class="sep">
+      <div class="group">
+        <label class="label" for="name">Theme name</label>
+        <input class="name-in" id="name" type="text" value="ZorinCustom-Dark" spellcheck="false">
+      </div>
+      <hr class="sep">
+      <div class="contrast" aria-live="polite">
+        <span class="label">Contrast (WCAG)</span>
+        <div id="contrast"></div>
+      </div>
+    </aside>
+
+    <div class="stage">
+      <div class="hint" id="hint">Hover a color on the left to see what it paints.</div>
+      <div class="desk" id="desk" role="img" aria-label="Desktop preview with the theme">
+        <div class="bar" data-r="background text">
+          <span class="act" data-r="accent">Activities</span>
+          <span>Sat Oct 11 14:32</span>
+          <span class="icons"><span></span><span></span><span></span></span>
+        </div>
+        <div class="desk-body">
+          <div class="win" data-r="background glass blur">
+            <div class="hb" data-r="background">
+              <span class="btn ico" data-r="background text">‹</span>
+              <div class="ttl"><b data-r="text">Files</b><small data-r="background">~/Documents</small></div>
+              <div class="linked"><span class="btn on" data-r="background text">List</span><span class="btn" data-r="background text">Grid</span></div>
+              <span class="wctl" id="wctl" data-r="buttons"><span class="wb" data-b="minimize" title="Minimize"></span><span class="wb" data-b="maximize" title="Maximize"></span><span class="wb" data-b="close" title="Close"></span></span>
+            </div>
+            <div class="wbody">
+              <nav class="side" data-r="background glass">
+                <div data-r="text">Home</div>
+                <div class="sel" data-r="accent on_accent">Documents</div>
+                <div data-r="text">Downloads</div>
+                <div data-r="text">Pictures</div>
+                <div class="dim" data-r="background">Trash</div>
+              </nav>
+              <div class="content">
+                <div class="row">
+                  <span class="entry focus" data-r="background text accent glass">final-report.odt</span>
+                  <span class="entry ph" data-r="background glass">Search files…</span>
+                </div>
+                <div class="list" data-r="background glass">
+                  <div data-r="text"><span>Expenses.ods</span><small data-r="background">12 KB</small></div>
+                  <div class="rsel" data-r="accent text"><span>Signed contract.pdf</span><small data-r="background">340 KB</small></div>
+                  <div data-r="text"><span>Meeting notes.md</span><small data-r="background">3 KB</small></div>
+                  <div class="off" data-r="background"><span>Locked file</span><small>—</small></div>
+                </div>
+                <div class="row">
+                  <span class="btn" data-r="background text">Cancel</span>
+                  <span class="btn hov" data-r="background text">Hover</span>
+                  <span class="btn sug" data-r="accent on_accent">Save</span>
+                  <span class="btn des" data-r="error on_accent">Delete</span>
+                </div>
+                <div class="row">
+                  <span class="sw on" data-r="accent background"></span>
+                  <span class="sw" data-r="background"></span>
+                  <span class="chk" data-r="accent on_accent">✓</span>
+                  <span class="chk off" data-r="background"></span>
+                  <span class="scale" data-r="accent background"><span class="tr"><i></i></span><span class="kn"></span></span>
+                </div>
+                <div class="row">
+                  <span class="prog" data-r="accent background"><i></i></span>
+                  <span class="entry err" data-r="error">name/invalid</span>
+                </div>
+                <div class="status">
+                  <span style="color:var(--success-c)" data-r="success"><i></i>Backup complete</span>
+                  <span style="color:var(--warn-c)" data-r="warning"><i></i>Battery at 15%</span>
+                  <span style="color:var(--error-c)" data-r="error"><i></i>Copy failed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-right">
+          <div class="qs states" data-r="buttons" id="states" aria-label="Window buttons in each state"></div>
+          <div class="qs" data-r="background">
+            <div class="tiles">
+              <span class="qt on" data-r="accent on_accent">Wi-Fi</span>
+              <span class="qt on" data-r="accent on_accent">Bluetooth</span>
+              <span class="qt" data-r="accent text">Airplane Mode</span>
+              <span class="qt" data-r="accent text">Night Light</span>
+            </div>
+            <div class="sl"><span>🔊</span><span class="t over" data-r="accent error"><i></i></span></div>
+            <div class="sl"><span>☀</span><span class="t" data-r="accent"><i></i></span></div>
+            <div class="note" data-r="background text">
+              <b>Updates</b>
+              <span class="ok" data-r="success">System is up to date</span>
+            </div>
+            <div class="note" data-r="background text">
+              <b>Disk almost full</b>
+              <span class="warn" data-r="warning">2.1 GB left</span>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>What each variable changes</h2>
+    <p class="sub">Every color of the original theme belongs to a family. When you change a family's base color, all of its colors move together: same hue shift, proportional saturation and remapped lightness. That is why a single choice recalculates dozens of shades.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Option</th><th>Original</th><th>Now</th><th class="num">Colors</th><th class="num">Uses</th><th>Where it shows up</th></tr></thead>
+        <tbody id="roles"></tbody>
+      </table>
+    </div>
+    <div id="families"></div>
+  </section>
+
+  <section class="card">
+    <h2>Button icons: where to get them and how to make them</h2>
+    <p class="sub">Close, maximize and minimize can use any SVG or PNG of yours. The theme copies the file into itself and draws it in place of the button, in GTK3 and GTK4 apps (Files, Settings, Text Editor, Terminal…).</p>
+    <div class="guide">
+      <div>
+        <h3>The format that works</h3>
+        <ul>
+          <li>A <b>square SVG</b>, ideally <code>viewBox="0 0 16 16"</code>. It is stretched to the size chosen in the control (16 to 26 px). <span>PNG works too: use 64×64 or larger, with a transparent background.</span></li>
+          <li>The file is <b>the whole button</b>: draw the circle (or any shape you like) and the symbol together, and leave 1 px of margin at the edges.</li>
+          <li>Colors are fixed in the file. <span>They don't follow the accent or change when the window loses focus; in that case the theme just dims the button.</span></li>
+          <li>No text, fonts or embedded images. <span>In Inkscape: select everything, use <i>Path → Object to Path</i> and <i>Path → Stroke to Path</i>, and save as <i>Optimized SVG</i>.</span></li>
+          <li>No spaces in the name: <code>icons/close.svg</code>. <span><span class="mono">palette.conf</span> only reads the first word after <span class="mono">=</span>.</span></li>
+          <li>Optional: a <b>restore</b> icon, shown instead of maximize when the window is maximized. Without it, the maximize icon is used.</li>
+        </ul>
+        <p class="m">Ready-made templates: <code>icons/example-*.svg</code> (colored diamonds). Open one in Inkscape and use it as a starting point.</p>
+      </div>
+      <div>
+        <h3>Where to get them</h3>
+        <ul>
+          <li><b>Icon Library</b> and <b>Icon Preview</b> (GNOME apps on Flathub): every GNOME symbol to copy as SVG, plus a real-size preview of your icon. <span><code>flatpak install flathub org.gnome.design.IconLibrary org.gnome.design.IconPreview</code></span></li>
+          <li>Free SVG icon sets: <a href="https://phosphoricons.com" target="_blank" rel="noopener">Phosphor</a> <span>(MIT)</span>, <a href="https://tabler.io/icons" target="_blank" rel="noopener">Tabler</a> <span>(MIT)</span>, <a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a> <span>(ISC)</span>, <a href="https://fonts.google.com/icons" target="_blank" rel="noopener">Material Symbols</a> <span>(Apache 2.0)</span>. Search for <i>x</i>, <i>close</i>, <i>minus</i>, <i>plus</i>, <i>square</i>, <i>chevron</i>, <i>maximize</i>.</li>
+          <li>Those icons are just the symbol, drawn with a stroke. To turn one into a button: put a circle behind it in Inkscape, convert the stroke to a path and export.</li>
+          <li>Buttons from existing themes (WhiteSur, Orchis, Colloid, Fluent…) on <a href="https://www.gnome-look.org" target="_blank" rel="noopener">gnome-look.org</a> (<i>GTK3/4 Themes</i> section): download the theme and look inside <code>assets</code> for files with <i>titlebutton</i>, <i>close</i> or <i>window</i> in the name. <span>Those themes are usually GPL: fine for personal use.</span></li>
+          <li><a href="https://jakearchibald.github.io/svgomg/" target="_blank" rel="noopener">SVGOMG</a> cleans up a heavy SVG in the browser. Before using one, open it in the browser: if it shows up there, GTK can draw it too.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Making the system recognize them as icons</h3>
+        <p>GTK asks for the buttons by icon name: <code>window-close-symbolic</code>, <code>window-maximize-symbolic</code>, <code>window-minimize-symbolic</code> and <code>window-restore-symbolic</code>. An icon theme of your own with those files replaces the buttons without touching the GTK theme, and the symbol is painted in the text color:</p>
+<pre>~/.local/share/icons/MyIcons/
+├── index.theme
+└── scalable/actions/
+    ├── window-close-symbolic.svg
+    ├── window-maximize-symbolic.svg
+    ├── window-minimize-symbolic.svg
+    └── window-restore-symbolic.svg</pre>
+<pre>[Icon Theme]
+Name=MyIcons
+Inherits=ZorinBlue-Light,Adwaita,hicolor
+Directories=scalable/actions
+
+[scalable/actions]
+Size=16
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=Actions</pre>
+        <ul>
+          <li><code>-symbolic</code> icons: 16×16, <b>a single color</b> (any color; GTK repaints it), fill only.</li>
+          <li>In <code>Inherits</code>, put the icon theme you use today: <code>gsettings get org.gnome.desktop.interface icon-theme</code>.</li>
+          <li>Activate it with <code>gsettings set org.gnome.desktop.interface icon-theme MyIcons</code> and reopen your apps.</li>
+          <li>This route only shows up with the <b>Zorin</b> button style. With Circles and Plain, or with a custom icon, the theme draws the button and hides the system icon.</li>
+        </ul>
+        <p class="m">Limit of both routes: apps that draw their own title bar (Chrome, VS Code and other Electron apps, Qt apps) don't use the GTK theme.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card out">
+    <div>
+      <h2>Your palette.conf</h2>
+      <p class="sub">Copy it and paste it over the project's <span class="mono">palette.conf</span>.</p>
+      <pre class="conf" id="conf"></pre>
+      <div class="actions">
+        <button class="act-btn primary" id="copy" type="button">Copy palette.conf</button>
+        <button class="act-btn" id="copycmd" type="button">Copy command</button>
+        <span class="toast" id="toast" aria-live="polite"></span>
+      </div>
+    </div>
+    <div>
+      <h2>Apply it</h2>
+      <ol class="steps">
+        <li>Get the project: <code>git clone https://github.com/Grs2080w/gtk-theme-generator.git</code></li>
+        <li>Paste the content into the project's <code>palette.conf</code>.</li>
+        <li>Inside the project folder, run <code>./install.sh --apply</code>. It generates the theme, moves it to <code>/usr/share/themes</code> (asks for your password) and activates it.</li>
+        <li>If you picked custom icons, copy the files to the project's <code>icons/</code> folder first, with the name shown in palette.conf.</li>
+        <li>The top bar changes right away. Close and reopen your apps to see the rest. With blur checked, install.sh also turns on app blur in Blur my Shell. To turn it off later, open the extension's preferences: <i>Applications → Blur</i>.</li>
+        <li>To go back to the original: <code>gsettings set org.gnome.desktop.interface gtk-theme ZorinBlue-Dark</code> and <code>gsettings set org.gnome.shell.extensions.user-theme name ZorinBlue-Dark</code>.</li>
+      </ol>
+      <h2 style="margin-top:20px">Import a palette.conf</h2>
+      <p class="sub">Paste a file you already have to keep editing it.</p>
+      <textarea id="import" spellcheck="false" placeholder="background = #222b30&#10;accent = #bde6fb&#10;…"></textarea>
+      <div class="actions"><button class="act-btn" id="doimport" type="button">Load</button><span class="err-msg" id="imperr" aria-live="polite"></span></div>
+    </div>
+  </section>
+
+  <footer>own-theme is free and open source: <a href="https://github.com/Grs2080w/gtk-theme-generator" target="_blank" rel="noopener">github.com/Grs2080w/gtk-theme-generator</a>. Not affiliated with Zorin Group or the GNOME Foundation.</footer>
+</div>
+
+<script>
+// [color, family, uses] of every non-fixed ZorinBlue-Dark color. Generated by tools/export-colors.py; don't edit by hand.
+const SOURCE = [["#bde6fb", "accent", 443], ["#bde6fb", "text", 242], ["#161c1f", "background", 101], ["#71848d", "background", 86], ["#161c1f", "on_accent", 86], ["#222b30", "background", 63], ["#2d3940", "background", 59], ["#8097a3", "background", 52], ["#fb7c7c", "error", 42], ["#2b343a", "background", 38], ["#171c1f", "background", 33], ["#6f8896", "background", 31], ["#faa483", "warning", 27], ["#1e2428", "background", 26], ["#171c1f", "on_accent", 26], ["#35434a", "background", 23], ["#4cd9a4", "success", 16], ["#edf8fe", "accent", 13], ["#242b30", "background", 12], ["#3d4c54", "background", 12], ["#3f4b54", "background", 11], ["#415159", "background", 11], ["#283035", "background", 9], ["#50636d", "background", 8], ["#9ec0d2", "accent", 8], ["#3c4b53", "background", 8], ["#586d77", "background", 7], ["#647b86", "background", 7], ["#6ee1b6", "success", 7], ["#2f373c", "background", 6], ["#a5ddf9", "accent", 6], ["#43545c", "background", 6], ["#273035", "background", 5], ["#1e262a", "background", 5], ["#273238", "background", 5], ["#344249", "background", 5], ["#a0c2d4", "accent", 5], ["#fb6363", "error", 4], ["#313e45", "background", 4], ["#a8cddf", "accent", 4], ["#90abb9", "background", 4], ["#d5effc", "text", 4], ["#e2f4fd", "accent", 4], ["#e8f6fd", "accent", 4], ["#3b464d", "background", 3], ["#9bbdcf", "accent", 3], ["#69818d", "background", 3], ["#485a63", "background", 3], ["#58676f", "background", 3], ["#96b7c8", "text", 3], ["#88a6b5", "background", 3], ["#d9f1fd", "accent", 3], ["#0d1012", "background", 2], ["#9bbdcf", "text", 2], ["#f97e7e", "error", 2], ["#41484c", "background", 2], ["#b0d7ea", "accent", 2], ["#93b3c4", "background", 2], ["#47545b", "background", 2], ["#8ba9b9", "background", 2], ["#37444b", "background", 2], ["#3c474d", "background", 2], ["#191e21", "background", 2], ["#435057", "background", 2], ["#d5effc", "accent", 2], ["#485961", "background", 2], ["#232b2f", "background", 2], ["#2b353a", "background", 2], ["#1b2125", "background", 2], ["#20262a", "background", 2], ["#a1c4d6", "accent", 2], ["#37444a", "background", 2], ["#4d5f68", "background", 2], ["#566a74", "background", 2], ["#637985", "background", 2], ["#1d2529", "background", 2], ["#1a2125", "background", 2], ["#e97373", "error", 2], ["#dc6c6c", "error", 2], ["#cf6666", "error", 2], ["#e79879", "warning", 2], ["#db8f73", "warning", 2], ["#ce876c", "warning", 2], ["#a0defe", "accent", 2], ["#d2f3ff", "accent", 2], ["#37464e", "background", 1], ["#1c2428", "background", 1], ["#5f6f77", "background", 1], ["#bee5fa", "accent", 1], ["#8fd3f6", "accent", 1], ["#f74d4d", "error", 1], ["#2d3335", "background", 1], ["#222b30", "on_accent", 1], ["#1e2428", "on_accent", 1], ["#56656c", "background", 1], ["#2f3a40", "background", 1], ["#96b7c8", "accent", 1], ["#93b1c0", "background", 1], ["#afd5e8", "accent", 1], ["#1c2429", "background", 1], ["#374147", "background", 1], ["#242d33", "background", 1], ["#7792a0", "background", 1], ["#4c5960", "background", 1], ["#add3e7", "accent", 1], ["#21282c", "background", 1], ["#7ad9f1", "accent", 1], ["#0f9ac8", "accent", 1], ["#caeaf2", "text", 1], ["#f8d2ce", "error", 1], ["#44535b", "background", 1], ["#4b5d67", "background", 1], ["#a9cee1", "accent", 1], ["#a9cee0", "accent", 1], ["#b6def3", "accent", 1], ["#242d32", "background", 1], ["#2d383d", "background", 1], ["#364349", "background", 1], ["#2e393e", "background", 1], ["#3f4d54", "background", 1], ["#2a3338", "background", 1], ["#38464e", "background", 1], ["#3f4f57", "background", 1], ["#586d78", "background", 1], ["#5f7581", "background", 1], ["#6a828f", "background", 1], ["#323f47", "background", 1], ["#50636c", "background", 1], ["#5d727c", "background", 1], ["#1c2427", "background", 1], ["#fc9595", "error", 1], ["#fb5959", "error", 1], ["#627884", "background", 1], ["#6b8390", "background", 1], ["#7893a1", "background", 1], ["#ff5f5f", "error", 1], ["#ff929b", "error", 1], ["#8ca0ac", "background", 1], ["#596e79", "background", 1], ["#75caf6", "text", 1]];
+const REF ={ background: '#222b30', accent: '#bde6fb', text: '#bde6fb', on_accent: '#161c1f', error: '#fb7c7c', warning: '#faa483', success: '#6ee1b6' };
+const ROLES = [
+  { k: 'background', name: 'Background', what: 'Window. Content, borders, sidebar, hover and dimmed text derive from it.', where: 'windows, title bar, lists, entries, sidebar, buttons, top bar, menus' },
+  { k: 'accent', name: 'Accent', what: 'Selection, suggested button, focus, switch, slider, toggles.', where: 'selection, suggested button, switches/checkboxes when on, sliders, progress, focus ring, quick settings' },
+  { k: 'text', name: 'Text', what: 'Main text across the interface.', where: 'labels, titles, list and entry text, top bar clock' },
+  { k: 'on_accent', name: 'Text on accent', what: 'Text on top of the accent and the colored buttons.', where: 'selected item, suggested/destructive button, checkbox mark, toggles when on', auto: true },
+  { k: 'error', name: 'Error', what: 'Destructive actions and invalid fields.', where: 'destructive button, invalid entry, volume above 100%' },
+  { k: 'warning', name: 'Warning', what: 'Alerts that need attention.', where: 'warning infobar, low battery, low levelbar' },
+  { k: 'success', name: 'Success', what: 'Confirmations and drag-and-drop.', where: 'confirmations, drag-and-drop target' },
+];
+// g: group. The "complete" ones also set glass and buttons; the others only change colors.
+const PRESETS = [
+  { g: 'Zorin', n: 'Zorin Blue', background: '#222b30', accent: '#bde6fb', text: '#bde6fb' },
+  { g: 'Zorin', n: 'Zorin Green', background: '#202b27', accent: '#bbf1dd', text: '#bbf1dd' },
+  { g: 'Zorin', n: 'Zorin Purple', background: '#28232d', accent: '#d8c4f1', text: '#d8c4f1' },
+  { g: 'Zorin', n: 'Zorin Red', background: '#2e1f1f', accent: '#fdb4b4', text: '#fdb4b4' },
+  { g: 'Zorin', n: 'Zorin Orange', background: '#2e231f', accent: '#fcc8b4', text: '#fcc8b4' },
+  { g: 'Zorin', n: 'Zorin Yellow', background: '#2c281d', accent: '#fce8ad', text: '#fce8ad' },
+  { g: 'Zorin', n: 'Zorin Brown', background: '#292523', accent: '#e5d3ca', text: '#e5d3ca' },
+  { g: 'Zorin', n: 'Zorin Grey', background: '#2a2a2a', accent: '#ffffff', text: '#ffffff' },
+  { g: 'Popular palettes', n: 'Catppuccin Mocha', background: '#1e1e2e', accent: '#cba6f7', text: '#cdd6f4', error: '#f38ba8', warning: '#fab387', success: '#a6e3a1' },
+  { g: 'Popular palettes', n: 'Dracula', background: '#282a36', accent: '#bd93f9', text: '#f8f8f2', error: '#ff5555', warning: '#ffb86c', success: '#50fa7b' },
+  { g: 'Popular palettes', n: 'Tokyo Night', background: '#1a1b26', accent: '#7aa2f7', text: '#c0caf5', error: '#f7768e', warning: '#e0af68', success: '#9ece6a' },
+  { g: 'Popular palettes', n: 'Nord', background: '#2e3440', accent: '#88c0d0', text: '#e5e9f0', error: '#bf616a', warning: '#d08770', success: '#a3be8c' },
+  { g: 'Popular palettes', n: 'Gruvbox', background: '#282828', accent: '#fe8019', text: '#ebdbb2', error: '#fb4934', warning: '#fabd2f', success: '#b8bb26' },
+  { g: 'Popular palettes', n: 'Rosé Pine', background: '#191724', accent: '#ebbcba', text: '#e0def4', error: '#eb6f92', warning: '#f6c177', success: '#9ccfd8' },
+  { g: 'Popular palettes', n: 'Everforest', background: '#2d353b', accent: '#a7c080', text: '#d3c6aa', error: '#e67e80', warning: '#e69875', success: '#83c092' },
+  { g: 'Popular palettes', n: 'Kanagawa', background: '#1f1f28', accent: '#7e9cd8', text: '#dcd7ba', error: '#e46876', warning: '#ffa066', success: '#98bb6c' },
+  { g: 'Popular palettes', n: 'One Dark', background: '#282c34', accent: '#61afef', text: '#abb2bf', error: '#e06c75', warning: '#d19a66', success: '#98c379' },
+  { g: 'Popular palettes', n: 'Solarized', background: '#002b36', accent: '#268bd2', text: '#93a1a1', error: '#dc322f', warning: '#cb4b16', success: '#859900' },
+  { g: 'Popular palettes', n: 'Monokai', background: '#272822', accent: '#66d9ef', text: '#f8f8f2', error: '#f92672', warning: '#fd971f', success: '#a6e22e' },
+  { g: 'Popular palettes', n: 'Ayu Mirage', background: '#1f2430', accent: '#ffcc66', text: '#cccac2', error: '#ff6666', warning: '#ffa659', success: '#87d96c' },
+  { g: 'Combinations', n: 'Graphite + lilac', background: '#262626', accent: '#c4a7ff', text: '#e8e8e8' },
+  { g: 'Combinations', n: 'Forest + amber', background: '#1f2621', accent: '#f2c46d', text: '#e6eadf' },
+  { g: 'Combinations', n: 'Midnight + coral', background: '#1b1f2e', accent: '#ff9e80', text: '#e4e7f2' },
+  { g: 'Combinations', n: 'OLED black + blue', background: '#0b0b0c', accent: '#8ab4f8', text: '#e8eaed' },
+  { g: 'Combinations', n: 'Wine + rosé', background: '#2a1b22', accent: '#f5a8c4', text: '#f1e4ea' },
+  { g: 'Combinations', n: 'Ocean + mint', background: '#0f2229', accent: '#7ee0c3', text: '#dceff0' },
+  { g: 'Complete (glass and buttons)', n: 'macOS-style glass', background: '#1c1c1e', accent: '#0a84ff', text: '#f2f2f7', error: '#ff453a', warning: '#ff9f0a', success: '#30d158',
+    radius: 1.2, window_opacity: 0.8, content_opacity: 0.85, blur: 'yes', blur_strength: 40,
+    buttons: 'circles', glyphs: 'mac', symbols: 'hover', button_size: 16, button_close: '#ff5f57', button_maximize: '#28c840', button_minimize: '#febc2e' },
+  { g: 'Complete (glass and buttons)', n: 'Aurora (lilac glass)', background: '#1a1626', accent: '#c4a7ff', text: '#ece8f6',
+    radius: 1.3, window_opacity: 0.7, content_opacity: 0.8, blur: 'yes', blur_strength: 50,
+    buttons: 'circles', glyphs: 'lines', symbols: 'always', button_size: 18 },
+  { g: 'Complete (glass and buttons)', n: 'Catppuccin glass', background: '#1e1e2e', accent: '#cba6f7', text: '#cdd6f4', error: '#f38ba8', warning: '#fab387', success: '#a6e3a1',
+    radius: 1.2, window_opacity: 0.75, content_opacity: 0.85, blur: 'yes', blur_strength: 45,
+    buttons: 'circles', glyphs: 'lines', symbols: 'hover', button_size: 16 },
+  { g: 'Complete (glass and buttons)', n: 'Minimal square', background: '#161616', accent: '#e0e0e0', text: '#e0e0e0',
+    radius: 0.3, window_opacity: 1, content_opacity: 1, blur: 'no',
+    buttons: 'plain', glyphs: 'lines', button_size: 20 },
+  { g: 'Complete (glass and buttons)', n: 'Nord frost', background: '#2e3440', accent: '#88c0d0', text: '#eceff4', error: '#bf616a', warning: '#d08770', success: '#a3be8c',
+    radius: 1, window_opacity: 0.82, content_opacity: 0.9, blur: 'yes', blur_strength: 35,
+    buttons: 'plain', glyphs: 'arrows', button_size: 20 },
+];
+const EXTRAS_KEYS = ['radius', 'window_opacity', 'content_opacity', 'blur', 'blur_strength', 'blur_mode', 'buttons', 'glyphs', 'symbols', 'button_size', 'button_close', 'button_maximize', 'button_minimize'];
+const DEFAULTS = {
+  harmony: true,  // page-only; not written to palette.conf
+  name: 'ZorinCustom-Dark', background: '#222b30', accent: '#bde6fb', text: '#bde6fb', on_accent: 'auto', error: '#fb7c7c', warning: '#faa483', success: '#6ee1b6', radius: 1,
+  window_opacity: 1, content_opacity: 1, blur: 'no', blur_strength: 30, blur_mode: 'static',
+  buttons: 'zorin', glyphs: 'lines', symbols: 'hover', button_size: 18,
+  button_close: 'auto', button_maximize: 'auto', button_minimize: 'auto',
+  icon_close: 'none', icon_maximize: 'none', icon_minimize: 'none', icon_restore: 'none',
+};
+const COLORS = ['background', 'accent', 'text', 'on_accent', 'error', 'warning', 'success'];
+const BUTTONS = ['close', 'maximize', 'minimize', 'restore'];
+const BNAME = { close: 'Close', maximize: 'Maximize', minimize: 'Minimize', restore: 'Restore' };
+const AUTO_COLOR = { close: 'error', maximize: 'success', minimize: 'warning' };
+const CHOICES = {
+  blur_mode: [['static', 'Wallpaper'], ['dynamic', 'Everything behind']],
+  buttons: [['zorin', 'Zorin'], ['circles', 'Circles'], ['plain', 'Plain']],
+  glyphs: [['lines', 'Lines'], ['arrows', 'Arrows'], ['mac', 'Mac']],
+  symbols: [['always', 'Always'], ['hover', 'On hover'], ['never', 'Never']],
+};
+
+// ----- same math as generate-theme.py -----
+const hexRgb = h => { h = h.replace('#', ''); if (h.length === 3) h = [...h].map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+const rgbHex = c => '#' + c.map(x => x.toString(16).padStart(2, '0')).join('');
+function rgbHsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+  if (mx === mn) return [0, 0, l];
+  const d = mx - mn, s = l <= 0.5 ? d / (mx + mn) : d / (2 - mx - mn);
+  let h = mx === r ? (g - b) / d : mx === g ? 2 + (b - r) / d : 4 + (r - g) / d;
+  h = ((h / 6) % 1 + 1) % 1;
+  return [h * 360, s, l];
+}
+function hslRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360 / 360;
+  if (s === 0) return [l, l, l].map(x => Math.max(0, Math.min(255, Math.round(x * 255))));
+  const m2 = l <= 0.5 ? l * (1 + s) : l + s - l * s, m1 = 2 * l - m2;
+  const v = hue => { hue = ((hue % 1) + 1) % 1; if (hue < 1 / 6) return m1 + (m2 - m1) * hue * 6; if (hue < 0.5) return m2; if (hue < 2 / 3) return m1 + (m2 - m1) * (2 / 3 - hue) * 6; return m1; };
+  return [v(h + 1 / 3), v(h), v(h - 1 / 3)].map(x => Math.max(0, Math.min(255, Math.round(x * 255))));
+}
+const mapL = (l, lr, lt) => l <= lr ? (lr ? l * lt / lr : lt) : (lr < 1 ? lt + (l - lr) * (1 - lt) / (1 - lr) : lt);
+function transform(rgb, refHex, targetHex) {
+  const [h, s, l] = rgbHsl(rgb), [hr, sr, lr] = rgbHsl(hexRgb(refHex)), [ht, sa, lt] = rgbHsl(hexRgb(targetHex));
+  return hslRgb(h + (ht - hr), sr ? Math.min(1, s * sa / sr) : sa, mapL(l, lr, lt));
+}
+function lum(rgb) { const c = rgb.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+
+// ----- extras: glass and buttons (same logic as generate-theme.py: GLYPHS, glyph_svg, button_states, sidebar_opacity) -----
+const GLYPHS = {
+  lines: { close: 'M5 5l6 6M11 5l-6 6', maximize: 'M5.5 5.5h5v5h-5z', minimize: 'M5 8h6', restore: 'M5 7.5h3.5V11H5zM7.5 7.5V5H11v3.5H8.5' },
+  arrows: { close: 'M5 5l6 6M11 5l-6 6', maximize: 'M5 9.5l3-3 3 3', minimize: 'M5 6.5l3 3 3-3', restore: 'M5.5 4l2.5 2.5L10.5 4M5.5 12l2.5-2.5 2.5 2.5' },
+  mac: { close: 'M5.5 5.5l5 5M10.5 5.5l-5 5', maximize: 'M8 5v6M5 8h6', minimize: 'M5 8h6', restore: 'M5 8h6' },
+};
+const glyphSvg = (d, color, op) => `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="${d}" fill="none" stroke="${color}" stroke-opacity="${op}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n`;
+const sidebarOpacity = a => Math.round(a ** 3 * 1000) / 1000;
+function buttonStates(style, button, symbols, color, custom) {
+  const halo = 'alpha(currentColor,0.12)';
+  if (custom) return { '': ['transparent', 'custom', ''], ':hover': [halo, 'custom', ''], ':active': [halo, 'custom', 'darken'], ':backdrop': ['transparent', 'custom', 'dim'], ':backdrop:hover': [halo, 'custom', ''] };
+  if (style === 'circles') {
+    const img = m => (m ? 'dark' : null), always = symbols === 'always', hover = symbols !== 'never';
+    return { '': [color, img(always), ''], ':hover': [color, img(hover), ''], ':active': [color, img(hover), 'darken'], ':backdrop': ['alpha(currentColor,0.2)', null, ''], ':backdrop:hover': [color, img(hover), ''] };
+  }
+  const hot = button === 'close' ? color : halo, hotImg = button === 'close' ? 'dark' : 'text';
+  return { '': ['transparent', 'text', ''], ':hover': [hot, hotImg, ''], ':active': [hot, hotImg, 'darken'], ':backdrop': ['transparent', 'text', 'dim'], ':backdrop:hover': [hot, hotImg, ''] };
+}
+
+// ----- state -----
+const STORE = 'own-theme-studio';
+let st = { ...DEFAULTS };
+try { const s = JSON.parse(localStorage.getItem(STORE) || 'null'); if (s) st = { ...DEFAULTS, ...s }; } catch (e) {}
+// images used only by the preview (custom icons and wallpaper), stored separately
+let iconData = {}, wallData = null;
+try { iconData = JSON.parse(localStorage.getItem(STORE + '-icons') || '{}') || {}; } catch (e) {}
+try { wallData = localStorage.getItem(STORE + '-wall'); } catch (e) {}
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(st)); } catch (e) {} };
+const saveImgs = () => {
+  try { localStorage.setItem(STORE + '-icons', JSON.stringify(iconData)); } catch (e) {}
+  try { wallData ? localStorage.setItem(STORE + '-wall', wallData) : localStorage.removeItem(STORE + '-wall'); } catch (e) {}
+};
+
+function targets() {
+  const t = { background: st.background, accent: st.accent, text: st.text, error: st.error, warning: st.warning, success: st.success };
+  t.on_accent = st.on_accent === 'auto'
+    ? (lum(hexRgb(st.accent)) > 0.3 ? rgbHex(transform(hexRgb(REF.on_accent), REF.background, st.background)) : '#ffffff')
+    : st.on_accent;
+  return t;
+}
+function fam(hex, f, t) {
+  if (f === 'on_accent' && t.on_accent.toLowerCase() === '#ffffff') return [255, 255, 255];
+  return transform(hexRgb(hex), REF[f], t[f]);
+}
+const C = (hex, f, t, a) => { const c = fam(hex, f, t); return a == null ? rgbHex(c) : `rgba(${c.join(',')},${a})`; };
+
+// ----- build the controls -----
+const knobs = document.getElementById('knobs');
+ROLES.forEach(r => {
+  const d = document.createElement('div');
+  d.className = 'knob'; d.dataset.role = r.k;
+  d.innerHTML = `<input type="color" id="c-${r.k}" aria-label="${r.name}">
+    <label class="name" for="t-${r.k}">${r.name}</label>
+    <input type="text" id="t-${r.k}" spellcheck="false" maxlength="7">
+    <span class="what">${r.what}</span>` +
+    (r.auto ? `<label class="auto"><input type="checkbox" id="a-${r.k}"> automatic (dark or white depending on the accent)</label>` : '');
+  knobs.appendChild(d);
+  const col = d.querySelector('input[type=color]'), txt = d.querySelector('input[type=text]');
+  const changed = () => { if (st.harmony && (r.k === 'background' || r.k === 'accent')) harmonize(r.k); render(); };
+  col.addEventListener('input', () => { st[r.k] = col.value; changed(); });
+  txt.addEventListener('input', () => {
+    const v = txt.value.trim(), ok = /^#?[0-9a-f]{6}$/i.test(v);
+    txt.setAttribute('aria-invalid', ok ? 'false' : 'true');
+    if (ok) { st[r.k] = (v[0] === '#' ? v : '#' + v).toLowerCase(); changed(); }
+  });
+  if (r.auto) d.querySelector(`#a-${r.k}`).addEventListener('change', e => { st.on_accent = e.target.checked ? 'auto' : targets().on_accent; render(); });
+});
+const presets = document.getElementById('presets');
+[...new Set(PRESETS.map(p => p.g))].forEach(g => {
+  const title = document.createElement('span'); title.className = 'sub-l'; title.textContent = g;
+  const box = document.createElement('div'); box.className = 'presets';
+  presets.append(title, box);
+  PRESETS.filter(p => p.g === g).forEach(p => {
+    const complete = EXTRAS_KEYS.some(k => k in p);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'preset' + (complete ? ' full' : '');
+    b.innerHTML = `<i style="background:linear-gradient(135deg, ${p.background} 50%, ${p.accent} 50%)"></i>${p.n}`;
+    b.title = complete ? 'Changes colors, glass, corners and buttons (custom icons stay)' : 'Changes only the colors';
+    b.addEventListener('click', () => {
+      const { g: _g, n: _n, ...vals } = p;
+      const base = Object.fromEntries(COLORS.map(k => [k, DEFAULTS[k]]));
+      if (complete) EXTRAS_KEYS.forEach(k => { base[k] = DEFAULTS[k]; });
+      st = { ...st, ...base, ...vals }; render();
+    });
+    box.appendChild(b);
+  });
+});
+
+// ----- harmony: recompute text and status colors from the background and the accent -----
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const hslHex = (h, s, l) => rgbHex(hslRgb(h, s, l));
+function harmonize(origin) {
+  let [dh, ds, dl] = rgbHsl(hexRgb(st.accent));
+  if (origin !== 'accent') {
+    // accent readable on the background (minimum contrast 3:1)
+    const f = hexRgb(st.background);
+    for (let i = 0; i < 40 && ratio(hexRgb(hslHex(dh, ds, dl)), f) < 3 && dl < 0.95; i++) dl += 0.02;
+    st.accent = hslHex(dh, ds, dl);
+  }
+  // text: almost white, with a touch of the accent hue
+  st.text = ds < 0.05 ? hslHex(0, 0, 0.92) : hslHex(dh, Math.min(ds, 0.3), 0.92);
+  // status: fixed hues (red, orange, green) with the same intensity as the accent
+  const L = clamp(dl, 0.62, 0.8), S = clamp(ds, 0.55, 0.95);
+  st.error = hslHex(0, S, L);
+  st.warning = hslHex(18, S, L);
+  st.success = hslHex(157, S * 0.75, clamp(L - 0.04, 0.55, 0.8));
+  st.on_accent = 'auto';
+}
+document.getElementById('harmony').addEventListener('change', e => { st.harmony = e.target.checked; render(); });
+document.getElementById('harmonize').addEventListener('click', () => { harmonize('now'); render(); });
+document.getElementById('radius').addEventListener('input', e => { st.radius = +e.target.value; render(); });
+
+// glass
+const num2 = v => Math.round(parseFloat(v) * 100) / 100;
+document.getElementById('op-window').addEventListener('input', e => { st.window_opacity = num2(e.target.value); render(); });
+document.getElementById('op-content').addEventListener('input', e => { st.content_opacity = num2(e.target.value); render(); });
+document.getElementById('blur').addEventListener('change', e => { st.blur = e.target.checked ? 'yes' : 'no'; render(); });
+document.getElementById('blur-strength').addEventListener('input', e => { st.blur_strength = parseInt(e.target.value, 10); render(); });
+const readFile = (f, cb) => { const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(f); };
+document.getElementById('wall-file').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  readFile(f, url => {
+    // shrink it so it fits in localStorage
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      wallData = c.toDataURL('image/jpeg', 0.85); saveImgs(); render(false);
+    };
+    im.src = url;
+  });
+  e.target.value = '';
+});
+document.getElementById('wall-clear').addEventListener('click', () => { wallData = null; saveImgs(); render(false); });
+
+// window buttons
+Object.entries(CHOICES).forEach(([k, ops]) => {
+  const seg = document.getElementById('seg-' + k);
+  ops.forEach(([v, label]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.v = v; b.textContent = label;
+    b.addEventListener('click', () => { st[k] = v; render(); });
+    seg.appendChild(b);
+  });
+});
+const bcolors = document.getElementById('bcolors');
+['close', 'maximize', 'minimize'].forEach(b => {
+  const d = document.createElement('div'); d.className = 'bcolor';
+  d.innerHTML = `<span>${BNAME[b]}</span><input type="color" id="bc-${b}" aria-label="${BNAME[b]} button color"><label><input type="checkbox" id="ba-${b}"> auto</label>`;
+  bcolors.appendChild(d);
+  d.querySelector('input[type=color]').addEventListener('input', e => { st['button_' + b] = e.target.value; render(); });
+  d.querySelector('input[type=checkbox]').addEventListener('change', e => { st['button_' + b] = e.target.checked ? 'auto' : st[AUTO_COLOR[b]]; render(); });
+});
+document.getElementById('bsize').addEventListener('input', e => { st.button_size = parseInt(e.target.value, 10); render(); });
+const icons = document.getElementById('icons');
+BUTTONS.forEach(b => {
+  const d = document.createElement('div'); d.className = 'icrow';
+  d.innerHTML = `<span class="pv" id="ip-${b}"></span><span>${BNAME[b]}</span><span class="path" id="ipath-${b}"></span>
+    <span class="row-btns"><span class="file-btn">Choose<input type="file" accept=".svg,.png,image/svg+xml,image/png" aria-label="Custom icon: ${BNAME[b]}"></span><button class="x-btn" type="button" aria-label="Remove ${BNAME[b]} icon" title="Remove">✕</button></span>`;
+  icons.appendChild(d);
+  d.querySelector('input[type=file]').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!/\.(svg|png)$/i.test(f.name)) { document.getElementById('ipath-' + b).textContent = 'use .svg or .png'; return; }
+    readFile(f, url => { iconData[b] = url; st['icon_' + b] = 'icons/' + f.name; saveImgs(); render(); });
+    e.target.value = '';
+  });
+  d.querySelector('.x-btn').addEventListener('click', () => { delete iconData[b]; st['icon_' + b] = 'none'; saveImgs(); render(); });
+});
+document.getElementById('name').addEventListener('input', e => { st.name = e.target.value.replace(/[^\w.+-]/g, '') || 'ZorinCustom-Dark'; render(false); });
+
+// ----- highlight -----
+const desk = document.getElementById('desk'), hint = document.getElementById('hint');
+const HINT = 'Hover a color on the left to see what it paints.';
+const HL = { background: '#8fd3ff', accent: '#ffe066', text: '#ff7ad9', on_accent: '#7affc1', error: '#ffffff', warning: '#ffffff', success: '#ffffff', radius: '#ffe066', glass: '#8fd3ff', blur: '#7affc1', buttons: '#ffe066' };
+const EXTRA = {
+  radius: ['Corners', 'buttons, entries, windows, lists and popovers'],
+  glass: ['Glass', 'window background, sidebar, lists and entries. Text, buttons and menus stay opaque'],
+  blur: ['Blur', 'what shows behind translucent windows (blurred by the Blur my Shell extension)'],
+  buttons: ['Window buttons', 'close, maximize and minimize in every GTK3 and GTK4 app'],
+  harmony: ['Harmony', 'text, error, warning and success follow the background and the accent'],
+};
+function focusRole(k) {
+  desk.querySelectorAll('[data-r]').forEach(el => el.classList.toggle('hit', k === 'radius' ? /btn|entry|win|qs|list|chk/.test(el.className) : el.dataset.r.split(' ').includes(k)));
+  desk.classList.toggle('spot', !!k);
+  desk.style.setProperty('--hl', HL[k] || '#fff');
+  const r = ROLES.find(x => x.k === k), [n, w] = r ? [r.name, r.where] : (EXTRA[k] || ['', '']);
+  hint.innerHTML = k ? `<b>${n}</b> paints: ${w}` : HINT;
+}
+document.querySelectorAll('.controls .knob').forEach(el => {
+  el.addEventListener('mouseenter', () => focusRole(el.dataset.role));
+  el.addEventListener('focusin', () => focusRole(el.dataset.role));
+});
+document.querySelector('.controls').addEventListener('mouseleave', () => focusRole(null));
+
+// ----- window buttons in the preview -----
+const svgUrl = (d, color, op) => `url("data:image/svg+xml,${encodeURIComponent(glyphSvg(d, color, op))}")`;
+const buttonColor = b => (st['button_' + b] === 'auto' ? st[AUTO_COLOR[b]] : st['button_' + b]);
+// custom icon used by a button (restore falls back to maximize), or null
+function customFor(b, maxed) {
+  const n = maxed && b === 'maximize' ? 'restore' : b;
+  return st['icon_' + n] !== 'none' ? n : st['icon_' + b] !== 'none' ? b : null;
+}
+function paintButton(el, b, state, maxed) {
+  const name = maxed && b === 'maximize' ? 'restore' : b, custom = customFor(b, maxed);
+  const rgbT = hexRgb(st.text).join(','), cc = c => c && c.replace(/alpha\(currentColor,([\d.]+)\)/, `rgba(${rgbT},$1)`);
+  let size, gs, bg, img = null, op = 1, sh = 'none', missing = false;
+  if (st.buttons === 'zorin' && !custom) {
+    // original Zorin look: subtle circle and symbol in the text color (approximation)
+    size = 20; gs = 16;
+    const a = state.includes('active') ? 0.2 : state.includes('hover') ? 0.125 : 0.075;
+    bg = `rgba(${rgbT},${a})`; img = svgUrl(GLYPHS.lines[name], st.text, '1');
+    op = state === ':backdrop' ? 0.55 : 1;
+  } else {
+    const [color, im, ef] = buttonStates(st.buttons, b, st.symbols, buttonColor(b), !!custom)[state];
+    size = st.buttons === 'zorin' ? 20 : +st.button_size; gs = st.buttons === 'zorin' ? 16 : size;
+    bg = cc(color) || 'transparent';
+    if (im === 'custom') { img = iconData[custom] ? `url("${iconData[custom]}")` : null; missing = !iconData[custom]; }
+    else if (im === 'dark') img = svgUrl(GLYPHS[st.glyphs][name], '#000000', '0.6');
+    else if (im === 'text') img = svgUrl(GLYPHS[st.glyphs][name], st.text, '1');
+    if (ef === 'darken') sh = 'inset 0 0 0 100px rgba(0,0,0,0.15)';
+    if (st.buttons === 'plain' || custom) op = ef === 'dim' ? 0.55 : 1;
+  }
+  Object.assign(el.style, { width: size + 'px', height: size + 'px', backgroundColor: bg, backgroundImage: img || 'none', backgroundSize: `${gs}px ${gs}px`, opacity: op, boxShadow: sh });
+  el.classList.toggle('missing', missing);
+  el.title = BNAME[name] + (missing ? ' (load the file again to see it in the preview)' : '');
+}
+const wctl = document.getElementById('wctl');
+wctl.querySelectorAll('.wb').forEach(el => {
+  const b = el.dataset.b, p = s => paintButton(el, b, s, false);
+  el.addEventListener('mouseenter', () => p(':hover'));
+  el.addEventListener('mouseleave', () => p(''));
+  el.addEventListener('mousedown', () => p(':active'));
+  el.addEventListener('mouseup', () => p(':hover'));
+});
+function paintStates() {
+  const rows = [['Normal', () => '', false], ['Pointer on close', b => (b === 'close' ? ':hover' : ''), false], ['Unfocused window', () => ':backdrop', false], ['Maximized', () => '', true]];
+  const box = document.getElementById('states');
+  box.innerHTML = rows.map(([n], i) => `<span class="n">${n}</span><span class="wctl${i === 2 ? ' bk' : ''}" data-i="${i}">` +
+    ['minimize', 'maximize', 'close'].map(b => `<span class="wb" data-b="${b}"></span>`).join('') + '</span>').join('');
+  box.querySelectorAll('.wctl').forEach(w => { const [, f, maxed] = rows[w.dataset.i]; w.querySelectorAll('.wb').forEach(el => paintButton(el, el.dataset.b, f(el.dataset.b), maxed)); });
+}
+
+// ----- render -----
+function render(persist = true) {
+  const t = targets();
+  ROLES.forEach(r => {
+    const v = r.k === 'on_accent' ? t.on_accent : st[r.k];
+    const col = document.getElementById('c-' + r.k), txt = document.getElementById('t-' + r.k);
+    if (col.value !== v) col.value = v;
+    if (document.activeElement !== txt) { txt.value = v; txt.setAttribute('aria-invalid', 'false'); }
+    if (r.auto) { document.getElementById('a-' + r.k).checked = st.on_accent === 'auto'; col.disabled = txt.disabled = st.on_accent === 'auto'; }
+  });
+  document.getElementById('harmony').checked = !!st.harmony;
+  document.getElementById('radius').value = st.radius;
+  document.getElementById('radius-v').textContent = (+st.radius).toFixed(1) + '×';
+  const name = document.getElementById('name'); if (document.activeElement !== name) name.value = st.name;
+  const pct = x => Math.round(x * 100) + '%';
+  document.getElementById('op-window').value = st.window_opacity; document.getElementById('op-window-v').textContent = pct(st.window_opacity);
+  document.getElementById('op-content').value = st.content_opacity; document.getElementById('op-content-v').textContent = pct(st.content_opacity);
+  document.getElementById('blur').checked = st.blur === 'yes';
+  document.getElementById('blur-strength').value = st.blur_strength; document.getElementById('blur-strength-v').textContent = st.blur_strength;
+  document.getElementById('blur-row').setAttribute('aria-disabled', st.blur !== 'yes');
+  document.getElementById('blur-strength').disabled = st.blur !== 'yes';
+  document.getElementById('blur-mode-wrap').style.opacity = st.blur === 'yes' ? 1 : 0.45;
+  document.querySelectorAll('#seg-blur_mode button').forEach(b => b.disabled = st.blur !== 'yes');
+  document.getElementById('blur-mode-tip').textContent = st.blur_mode === 'static'
+    ? 'Blurs the wallpaper behind the window, with rounded corners matching the window.'
+    : 'Blurs everything behind, including other windows. On GNOME 46 (Zorin OS 17) the extension cannot round this mode: a square-cornered rectangle shows behind the window.';
+  document.getElementById('wall-clear').hidden = !wallData;
+  Object.keys(CHOICES).forEach(k => document.querySelectorAll(`#seg-${k} button`).forEach(b => b.setAttribute('aria-checked', b.dataset.v === st[k])));
+  const noStyle = st.buttons === 'zorin';
+  ['seg-glyphs', 'seg-symbols'].forEach(id => document.getElementById(id).setAttribute('aria-disabled', noStyle || (id === 'seg-symbols' && st.buttons !== 'circles')));
+  document.querySelectorAll('#seg-glyphs button').forEach(b => b.disabled = noStyle);
+  document.querySelectorAll('#seg-symbols button').forEach(b => b.disabled = st.buttons !== 'circles');
+  ['close', 'maximize', 'minimize'].forEach(b => {
+    const auto = st['button_' + b] === 'auto', c = document.getElementById('bc-' + b);
+    c.value = buttonColor(b); c.disabled = auto || noStyle; document.getElementById('ba-' + b).checked = auto; document.getElementById('ba-' + b).disabled = noStyle;
+  });
+  document.getElementById('bcolors-wrap').style.opacity = noStyle ? 0.45 : 1;
+  document.getElementById('bsize').value = st.button_size; document.getElementById('bsize-v').textContent = st.button_size + 'px';
+  document.getElementById('bsize').disabled = noStyle; document.getElementById('bsize-row').setAttribute('aria-disabled', noStyle);
+  BUTTONS.forEach(b => {
+    const v = st['icon_' + b], el = document.getElementById('ipath-' + b), pv = document.getElementById('ip-' + b);
+    const space = v !== 'none' && /\s/.test(v);
+    el.textContent = v === 'none' ? (b === 'restore' ? 'optional' : '—') : space ? `${v}: rename it without spaces` : v;
+    el.classList.toggle('warn', space); el.title = v === 'none' ? '' : v;
+    pv.style.backgroundImage = iconData[b] && v !== 'none' ? `url("${iconData[b]}")` : 'none';
+  });
+
+  // preview variables (exact original ZorinBlue-Dark colors, transformed)
+  const v = {
+    '--window': C('#222b30', 'background', t), '--view': C('#161c1f', 'background', t), '--sidebar': C('#2d3940', 'background', t),
+    '--btn': C('#2d3940', 'background', t), '--btn-hover': C('#35434a', 'background', t), '--border': C('#2b343a', 'background', t),
+    '--sw-off': C('#415159', 'background', t), '--knob': C('#161c1f', 'background', t),
+    '--muted-t': C('#71848d', 'background', t), '--placeholder': C('#69818d', 'background', t), '--insens': C('#6f8896', 'background', t),
+    '--panelbar': C('#1a2125', 'background', t, 0.92), '--qs-border': C('#88a6b5', 'background', t, 0.144),
+    '--text': C('#bde6fb', 'text', t), '--accent-c': C('#bde6fb', 'accent', t), '--on-accent': C('#161c1f', 'on_accent', t),
+    '--focus': C('#bde6fb', 'accent', t, 0.5), '--row-sel': C('#bde6fb', 'accent', t, 0.3),
+    '--qt-off': C('#bde6fb', 'accent', t, 0.075), '--qt-g1': C('#a0defe', 'accent', t), '--qt-g2': C('#d2f3ff', 'accent', t),
+    '--error-c': C('#fb7c7c', 'error', t), '--warn-c': C('#faa483', 'warning', t), '--success-c': C('#6ee1b6', 'success', t),
+    '--r': st.radius,
+  };
+  const ow = st.window_opacity, oc = st.content_opacity;
+  v['--window-a'] = C('#222b30', 'background', t, ow < 1 ? ow : null);
+  v['--window-bk'] = C('#1e2428', 'background', t);
+  v['--sidebar-a'] = C('#2d3940', 'background', t, ow < 1 ? sidebarOpacity(ow) : null);
+  v['--view-a'] = C('#161c1f', 'background', t, oc < 1 ? oc : null);
+  v['--blur'] = st.blur === 'yes' && (ow < 1 || oc < 1) ? `blur(${st.blur_strength}px)` : 'none';
+  const w = hexRgb(v['--window']), a = hexRgb(v['--accent-c']), sc = hexRgb(v['--success-c']), wc = hexRgb(v['--warn-c']);
+  // sharp shapes behind the window so the transparency and the blur are visible
+  v['--wall'] = wallData ? `url("${wallData}") center / cover` :
+    `radial-gradient(circle at 22% 32%, rgba(${a.join(',')},.75) 0 64px, transparent 65px), radial-gradient(circle at 58% 82%, rgba(${sc.join(',')},.55) 0 90px, transparent 91px), linear-gradient(118deg, transparent 38%, rgba(${wc.join(',')},.4) 38% 44%, transparent 44%), radial-gradient(120% 90% at 85% 10%, rgba(${a.join(',')},.22), transparent 55%), radial-gradient(90% 80% at 0% 100%, rgba(${a.join(',')},.12), transparent 60%), ${rgbHex(w.map(x => Math.round(x * 0.55)))}`;
+  Object.entries(v).forEach(([k, val]) => desk.style.setProperty(k, val));
+  wctl.querySelectorAll('.wb').forEach(el => paintButton(el, el.dataset.b, el.matches(':hover') ? ':hover' : '', false));
+  paintStates();
+
+  // contrast
+  const pairs = [
+    ['Text on background', v['--text'], v['--window'], 4.5],
+    ['Text on content', v['--text'], v['--view'], 4.5],
+    ['Text on accent', v['--on-accent'], v['--accent-c'], 4.5],
+    ['Dimmed text on background', v['--muted-t'], v['--window'], 3],
+    ['Accent on background', v['--accent-c'], v['--window'], 3],
+  ];
+  document.getElementById('contrast').innerHTML = pairs.map(([n, f, b, need]) => {
+    const r = ratio(hexRgb(f), hexRgb(b)), cls = r >= need ? 'good' : r >= need * 0.75 ? 'ok' : 'bad';
+    return `<div class="cr"><span>${n}</span><span class="pill ${cls}">${r.toFixed(1)}:1</span></div>`;
+  }).join('');
+
+  // role table and every color
+  const by = {}; SOURCE.forEach(([h, f, n]) => { (by[f] ||= []).push([h, n]); });
+  document.getElementById('roles').innerHTML = ROLES.map(r => {
+    const list = by[r.k] || [], uses = list.reduce((s, [, n]) => s + n, 0);
+    return `<tr><td><b>${r.name}</b><br><span class="mono" style="color:var(--muted)">${r.k === 'on_accent' ? 'text_on_accent' : r.k}</span></td>
+      <td><span class="sw2"><i style="background:${REF[r.k]}"></i><span class="mono">${REF[r.k]}</span></span></td>
+      <td><span class="sw2"><i style="background:${t[r.k]}"></i><span class="mono">${t[r.k]}</span></span></td>
+      <td class="num">${list.length}</td><td class="num">${uses}</td><td>${r.where}</td></tr>`;
+  }).join('');
+  document.getElementById('families').innerHTML = ROLES.map(r => {
+    const list = (by[r.k] || []).slice().sort((x, y) => rgbHsl(hexRgb(x[0]))[2] - rgbHsl(hexRgb(y[0]))[2]);
+    return `<div class="fam"><h3>${r.name} <small>${list.length} shades · original on top, new below</small></h3><div class="chips">` +
+      list.map(([h, n]) => { const nv = C(h, r.k, t); return `<span class="chip" title="${h} → ${nv} · ${n} uses"><i style="background:${h}"></i><i style="background:${nv}"></i></span>`; }).join('') + '</div></div>';
+  }).join('');
+
+  // palette.conf
+  const pad = (k, w) => (k + ' '.repeat(w)).slice(0, Math.max(w, k.length));
+  document.getElementById('conf').textContent =
+`# Made with the own-theme Studio. In the project folder run: ./install.sh --apply
+name = ${st.name}
+
+${pad('background', 10)} = ${st.background}
+${pad('accent', 10)} = ${st.accent}
+${pad('text', 10)} = ${st.text}
+text_on_accent = ${st.on_accent}
+
+${pad('error', 10)} = ${st.error}
+${pad('warning', 10)} = ${st.warning}
+${pad('success', 10)} = ${st.success}
+
+${pad('radius', 10)} = ${(+st.radius).toFixed(1)}
+
+# glass: below 1 the background is translucent; blur = yes turns on Blur my Shell for apps
+# blur_mode: static (wallpaper, rounded corners) | dynamic (everything behind, square corners on GNOME 46)
+window_opacity  = ${st.window_opacity}
+content_opacity = ${st.content_opacity}
+blur            = ${st.blur}
+blur_strength   = ${st.blur_strength}
+blur_mode       = ${st.blur_mode}
+
+# window buttons: zorin | circles | plain
+buttons         = ${st.buttons}
+glyphs          = ${st.glyphs}
+symbols         = ${st.symbols}
+button_size     = ${st.button_size}
+button_close    = ${st.button_close}
+button_maximize = ${st.button_maximize}
+button_minimize = ${st.button_minimize}
+# custom icons: path relative to this folder (no spaces) or none
+icon_close      = ${st.icon_close}
+icon_maximize   = ${st.icon_maximize}
+icon_minimize   = ${st.icon_minimize}
+icon_restore    = ${st.icon_restore}
+`;
+  if (persist) save();
+}
+
+// ----- copy / import -----
+const toast = document.getElementById('toast');
+async function copy(text, msg) {
+  try { await navigator.clipboard.writeText(text); toast.textContent = msg; }
+  catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById('conf')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast.textContent = 'Selected. Press Ctrl+C.'; }
+  setTimeout(() => toast.textContent = '', 2500);
+}
+document.getElementById('copy').addEventListener('click', () => copy(document.getElementById('conf').textContent, 'palette.conf copied'));
+document.getElementById('copycmd').addEventListener('click', () => copy('./install.sh --apply', 'Command copied'));
+document.getElementById('doimport').addEventListener('click', () => {
+  const err = document.getElementById('imperr'); err.textContent = '';
+  const next = { ...st }; let n = 0;
+  for (const line of document.getElementById('import').value.split('\n')) {
+    const m = line.trim().match(/^([\w]+)\s*=\s*(\S+)/); if (!m) continue;
+    let [, k, val] = m; if (k === 'text_on_accent') k = 'on_accent';
+    if (k === 'radius') { const x = parseFloat(val); if (!isNaN(x)) { next.radius = Math.max(0, Math.min(2, x)); n++; } continue; }
+    if (k === 'name') { next.name = val; n++; continue; }
+    if (k === 'window_opacity' || k === 'content_opacity') { const x = parseFloat(val); if (!isNaN(x)) { next[k] = Math.max(0.3, Math.min(1, num2(x))); n++; } continue; }
+    if (k === 'blur_strength' || k === 'button_size') { const x = parseInt(val, 10), [lo, hi] = k === 'blur_strength' ? [0, 100] : [16, 26]; if (!isNaN(x)) { next[k] = Math.max(lo, Math.min(hi, x)); n++; } continue; }
+    if (k === 'blur') { if (val === 'yes' || val === 'no') { next.blur = val; n++; } continue; }
+    if (k in CHOICES) { if (CHOICES[k].some(([v]) => v === val)) { next[k] = val; n++; } continue; }
+    if (k.startsWith('icon_') && k in DEFAULTS) { if (next[k] !== val) delete iconData[k.slice(5)]; next[k] = val; n++; continue; }
+    if (k.startsWith('button_') && val === 'auto') { next[k] = 'auto'; n++; continue; }
+    if (!(k in DEFAULTS)) continue;
+    if (k === 'on_accent' && val === 'auto') { next.on_accent = 'auto'; n++; continue; }
+    if (/^#[0-9a-f]{6}$/i.test(val)) { next[k] = val.toLowerCase(); n++; }
+    else if (/^#[0-9a-f]{3}$/i.test(val)) { next[k] = '#' + [...val.slice(1)].map(c => c + c).join('').toLowerCase(); n++; }
+  }
+  if (!n) { err.textContent = 'No "key = value" line recognized. E.g. accent = #c4a7ff'; return; }
+  st = next; saveImgs(); render(); err.textContent = '';
+  toast.textContent = `${n} values loaded`; setTimeout(() => toast.textContent = '', 2500);
+});
+
+render(false);
+</script>
+</body>
+</html>
